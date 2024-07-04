@@ -124,6 +124,7 @@ def get_ancestry(scores):
 				scores[5] = "16 ({})".format(scores[5])
 			else:
 				scores[5] = "{} ({})".format(scores[5] - 1, scores[5])
+			break
 		elif ui.is_elven(ancestry) and elven_qualified(scores):
 			if scores[0] > 16 and not is_masc:
 				print("STRENGTH: {} is too high for a feminine elf, reducing to 16".format(scores[0]),
