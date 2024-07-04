@@ -99,6 +99,7 @@ def half_orc_qualified(scores):
 	return result
 
 def get_ancestry(scores):
+	is_masc = False
 	while True:
 		ancestry = input("Which ancestry do they belong to?\n" \
 				 "Dwarven, Elven, Gnome, Half-Elven, Halfling, Half-Orc, or " \
@@ -189,7 +190,7 @@ def get_ancestry(scores):
 
 	print("\nAdjusted scores:")
 	ui.print_scores(scores)
-	return ancestry, scores
+	return ancestry, scores, is_masc
 
 def get_germane_method():
 	while True:
@@ -664,9 +665,291 @@ def generate_scores():
 
 	return scores, method < 5
 
+def mod_avg_height(height):
+	avg_height_mod = dice.d100()
+	if height < 60:
+		if avg_height_mod < 31:
+			height = height - dice.d3() * .5
+		elif avg_height_mod > 70:
+			height = height + dice.d3() * .5
+	else:
+		if avg_height_mod < 31:
+			height = height - dice.d4() * .5
+		elif avg_height_mod > 70:
+			height = height + dice.d4() * .5
+	return height
+
+def mod_avg_weight(weight):
+	avg_weight_mod = dice.d100()
+	if weight <= 100:
+		if avg_weight_mod < 31:
+			weight = weight - dice.d4()
+		elif avg_weight_mod > 70:
+			weight = weight + dice.d4()
+	else:
+		if avg_weight_mod < 31:
+			weight = weight - dice.d8()
+		elif avg_weight_mod > 70:
+			weight = weight + dice.d8()
+	return weight
+
+def get_dwarf_height_and_weight(is_masc, height_roll, weight_roll):
+	height = 46
+	weight = 120
+	if is_masc:
+		height = 48
+		weight = 150
+
+	if height_roll < 16:
+		height = height - dice.d4()
+	elif height_roll > 80:
+		if is_masc:
+			height = height + dice.d6()
+		else:
+			height = height + dice.d4()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 21:
+		weight = weight - dice.d(2, 8)
+	elif weight_roll > 65:
+		if is_masc:
+			weight = weight + dice.d(2, 12)
+		else:
+			weight = weight + dice.d(2, 10)
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def get_elf_height_and_weight(is_masc, height_roll, weight_roll):
+	height = 54
+	weight = 80
+	if is_masc:
+		height = 60
+		weight = 100
+
+	if height_roll < 11:
+		height = height - dice.d4()
+	elif height_roll > 80:
+		height = height + dice.d6()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 16:
+		weight = weight - dice.d10()
+	elif weight_roll > 90:
+		if is_masc:
+			weight = weight + dice.d20()
+		else:
+			weight = weight + dice.d(2, 6)
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def get_gnome_height_and_weight(is_masc, height_roll, weight_roll):
+	height = 39
+	weight = 75
+	if is_masc:
+		height = 42
+		weight = 80
+
+	if height_roll < 21:
+		height = height - dice.d3()
+	elif height_roll > 85:
+		height = height + dice.d3()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 21:
+		if is_masc:
+			weight = weight - dice.d(2, 4)
+		else:
+			weight = weight - dice.d8()
+	elif weight_roll > 75:
+		if is_masc:
+			weight = weight + dice.d(2, 6)
+		else:
+			weight = weight + dice.d8()
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def get_half_elf_height_and_weight(is_masc, height_roll, weight_roll):
+	height = 62
+	weight = 100
+	if is_masc:
+		height = 66
+		weight = 130
+
+	if height_roll < 36:
+		height = height - dice.d6()
+	elif height_roll > 90:
+		height = height + dice.d6()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 21:
+		if is_masc:
+			weight = weight - dice.d20()
+		else:
+			weight = weight - dice.d12()
+	elif weight_roll > 85:
+		if is_masc:
+			weight = weight + dice.d20()
+		else:
+			weight = weight + dice.d(2, 8)
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def get_halfling_height_and_weight(is_masc, height_roll, weight_roll):
+	height = 33
+	weight = 50
+	if is_masc:
+		height = 36
+		weight = 60
+
+	if height_roll < 11:
+		height = height - dice.d3()
+	elif height_roll > 90:
+		if is_masc:
+			height = height + dice.d6()
+		else:
+			height = height + dice.d3()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 11:
+		weight = weight - dice.d(2, 4)
+	elif weight_roll > 50:
+		if is_masc:
+			weight = weight + dice.d(2, 6)
+		else:
+			weight = weight + dice.d(2, 4)
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def get_half_orc_height_and_weight(is_masc, height_roll, weight_roll):
+	height = 62
+	weight = 120
+	if is_masc:
+		height = 66
+		weight = 150
+
+	if height_roll < 46:
+		if is_masc:
+			height = height - dice.d4()
+		else:
+			height = height - dice.d3()
+	elif height_roll > 75:
+		if is_masc:
+			height = height + dice.d4()
+		else:
+			height = height + dice.d3()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 31:
+		if is_masc:
+			weight = weight - dice.d(2, 8)
+		else:
+			weight = weight - dice.d(3, 6)
+	elif weight_roll > 55:
+		if is_masc:
+			weight = weight + dice.d(4, 10)
+		else:
+			weight = weight + dice.d(4, 8)
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def get_human_height_and_weight(is_pc, is_masc, height_roll, weight_roll):
+	height = 66
+	weight = 130
+	if is_masc:
+		height = 72
+		weight = 175
+
+	using_upper_limits = True
+	if is_pc:
+		if ui.is_negative(input("Is this PC possibly at the upper limits of human height/weight?\n")):
+			using_upper_limits = False
+
+	if height_roll < 21:
+		if is_masc:
+			height = height - dice.d12()
+		else:
+			height = height - dice.d6()
+	elif height_roll > 80:
+		if is_masc and using_upper_limits:
+			height = height + dice.d(2, 10)
+		elif is_masc:
+			height = height + dice.d12()
+		elif using_upper_limits:
+			height = height + dice.d(2, 6)
+		else:
+			height = height + dice.d8()
+	else:
+		height = mod_avg_height(height)
+
+	if weight_roll < 26:
+		if is_masc:
+			weight = weight - dice.d(3, 12)
+		else:
+			weight = weight - dice.d(3, 10)
+	elif weight_roll > 75:
+		if is_masc and using_upper_limits:
+			weight = weight + dice.d(10, 20)
+		elif is_masc:
+			weight = weight + dice.d(5, 12)
+		elif using_upper_limits:
+			weight = weight + dice.d(10, 12)
+		else:
+			weight = weight + dice.d(4, 12)
+	else:
+		weight = mod_avg_weight(weight)
+
+	return height, weight
+
+def generate_height_and_weight(ancestry, is_pc, is_masc):
+	height = 0
+	weight = 0
+	height_roll = dice.d100()
+	weight_roll = dice.d100()
+	if ui.is_dwarven(ancestry):
+		height, weight = get_dwarf_height_and_weight(is_masc, height_roll, weight_roll)
+	if ui.is_elven(ancestry):
+		height, weight = get_elf_height_and_weight(is_masc, height_roll, weight_roll)
+	if ui.is_gnome(ancestry):
+		height, weight = get_gnome_height_and_weight(is_masc, height_roll, weight_roll)
+	if ui.is_half_elven(ancestry):
+		height, weight = get_half_elf_height_and_weight(is_masc, height_roll, weight_roll)
+	if ui.is_halfling(ancestry):
+		height, weight = get_halfling_height_and_weight(is_masc, height_roll, weight_roll)
+	if ui.is_half_orc(ancestry):
+		height, weight = get_half_orc_height_and_weight(is_masc, height_roll, weight_roll)
+	if ui.is_human(ancestry):
+		height, weight = get_human_height_and_weight(is_pc, is_masc, height_roll, weight_roll)
+	else:
+		print("Unknown ancestry: {}, unable to generate height/weight".format(ancestry), \
+		      sys.stderr)
+	feet = int(height / 12)
+	inches = height % 12
+	print("Height: {}'' ({}' {}'')".format(height, feet, inches))
+	print("Weight: {} lbs.".format(weight))
+	return height, weight
+
 def main():
 	scores, is_pc = generate_scores()
-	ancestry, scores = get_ancestry(scores)
+	ancestry, scores, is_masc = get_ancestry(scores)
+	height, weight = generate_height_and_weight(ancestry, is_pc, is_masc)
 	return 0
 
 if __name__ == '__main__':
