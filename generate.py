@@ -595,7 +595,7 @@ def generate_scores():
 				print("CHARISMA: {}".format(raw_scores[5]))
 			if method2_scores:
 				print("Arrange these as desired:")
-			scores = arrange_scores(raw_scores, method1_scores)
+			scores = arrange_scores(raw_scores, method2_scores)
 		case 8:
 			scores = method_8()
 			print("STRENGTH: {}".format(scores[0]))
