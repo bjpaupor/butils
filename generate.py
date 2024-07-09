@@ -973,17 +973,17 @@ def generate_height_and_weight(ancestry, is_pc, is_masc):
 	weight_roll = dice.d100()
 	if ui.is_dwarven(ancestry):
 		height, weight = get_dwarf_height_and_weight(is_masc, height_roll, weight_roll)
-	if ui.is_elven(ancestry):
+	elif ui.is_elven(ancestry):
 		height, weight = get_elf_height_and_weight(is_masc, height_roll, weight_roll)
-	if ui.is_gnome(ancestry):
+	elif ui.is_gnome(ancestry):
 		height, weight = get_gnome_height_and_weight(is_masc, height_roll, weight_roll)
-	if ui.is_half_elven(ancestry):
+	elif ui.is_half_elven(ancestry):
 		height, weight = get_half_elf_height_and_weight(is_masc, height_roll, weight_roll)
-	if ui.is_halfling(ancestry):
+	elif ui.is_halfling(ancestry):
 		height, weight = get_halfling_height_and_weight(is_masc, height_roll, weight_roll)
-	if ui.is_half_orc(ancestry):
+	elif ui.is_half_orc(ancestry):
 		height, weight = get_half_orc_height_and_weight(is_masc, height_roll, weight_roll)
-	if ui.is_human(ancestry):
+	elif ui.is_human(ancestry):
 		height, weight = get_human_height_and_weight(is_pc, is_masc, height_roll, weight_roll)
 	else:
 		print("Unknown ancestry: {}, unable to generate height/weight".format(ancestry), \
