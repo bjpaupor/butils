@@ -2,25 +2,41 @@ import sys
 import dice
 import ui
 
-def dwarven_qualified(scores):
+def dwarven_qualified(scores, is_pc):
 	result = True
-	if scores[0] < 8:
+	if scores[0] < 8 and is_pc:
 		print("STRENGTH: {} is too low for a dwarf, a minimum of 8 is required".format(scores[0]),
 		      file=sys.stderr)
 		result = False
-	elif scores[4] < 11:
+	elif scores[0] < 7 and not is_pc:
+		print("STRENGTH: {} is too low for a dwarf, a minimum of 8 (adjusted) is required".format(scores[0]),
+		      file=sys.stderr)
+		result = False
+	elif scores[4] < 11 and is_pc:
+		print("CONSTITUTION: {} is too low for a dwarf, a minimum of 12 (adjusted) is required".format(scores[4]),
+		      file=sys.stderr)
+		result = False
+	elif scores[4] < 10 and not is_pc:
 		print("CONSTITUTION: {} is too low for a dwarf, a minimum of 12 (adjusted) is required".format(scores[4]),
 		      file=sys.stderr)
 		result = False
 	return result
 
-def elven_qualified(scores):
+def elven_qualified(scores, is_pc):
 	result = True
-	if scores[1] < 8:
+	if scores[1] < 8 and is_pc:
 		print("INTELLIGENCE: {} is too low for an elf, a minimum of 8 is required".format(scores[1]),
 		      file=sys.stderr)
 		result = False
-	elif scores[3] < 6:
+	elif scores[1] < 7 and not is_pc:
+		print("INTELLIGENCE: {} is too low for an elf, a minimum of 8 (adjusted) is required".format(scores[1]),
+		      file=sys.stderr)
+		result = False
+	elif scores[3] < 6 and is_pc:
+		print("DEXTERITY: {} is too low for an elf, a minimum of 7 (adjusted) is required".format(scores[3]),
+		      file=sys.stderr)
+		result = False
+	elif scores[3] < 5 and not is_pc:
 		print("DEXTERITY: {} is too low for an elf, a minimum of 7 (adjusted) is required".format(scores[3]),
 		      file=sys.stderr)
 		result = False
@@ -34,7 +50,7 @@ def elven_qualified(scores):
 		result = False
 	return result
 
-def gnome_qualified(scores):
+def gnome_qualified(scores, is_pc):
 	result = True
 	if scores[0] < 6:
 		print("STRENGTH: {} is too low for a gnome, a minimum of 6 is required".format(scores[0]),
@@ -44,8 +60,12 @@ def gnome_qualified(scores):
 		print("INTELLIGENCE: {} is too low for a gnome, a minimum of 7 is required".format(scores[1]),
 		      file=sys.stderr)
 		result = False
-	elif scores[4] < 8:
+	elif scores[4] < 8 and is_pc:
 		print("CONSTITUTION: {} is too low for a gnome, a minimum of 8 is required".format(scores[4]),
+		      file=sys.stderr)
+		result = False
+	elif scores[4] < 7 and not is_pc:
+		print("CONSTITUTION: {} is too low for a gnome, a minimum of 8 (adjusted) is required".format(scores[4]),
 		      file=sys.stderr)
 		result = False
 	return result
@@ -66,7 +86,7 @@ def half_elven_qualified(scores):
 		result = False
 	return result
 
-def halfling_qualified(scores):
+def halfling_qualified(scores, is_pc):
 	result = True
 	if scores[0] < 7:
 		print("STRENGTH: {} is too low for a halfling, a minimum of 6 (adjusted) is required".format(scores[0]),
@@ -76,12 +96,20 @@ def halfling_qualified(scores):
 		print("INTELLIGENCE: {} is too low for a halfling, a minimum of 6 is required".format(scores[1]),
 		      file=sys.stderr)
 		result = False
-	elif scores[3] < 7:
+	elif scores[3] < 7 and is_pc:
 		print("DEXTERITY: {} is too low for a halfling, a minimum of 8 (adjusted) is required".format(scores[3]),
 		      file=sys.stderr)
 		result = False
-	elif scores[4] < 10:
+	elif scores[3] < 6 and not is_pc:
+		print("DEXTERITY: {} is too low for a halfling, a minimum of 8 (adjusted) is required".format(scores[3]),
+		      file=sys.stderr)
+		result = False
+	elif scores[4] < 10 and is_pc:
 		print("CONSTITUTION: {} is too low for a halfling, a minimum of 10 is required".format(scores[4]),
+		      file=sys.stderr)
+		result = False
+	elif scores[4] < 9 and not is_pc:
+		print("CONSTITUTION: {} is too low for a halfling, a minimum of 10 (adjusted) is required".format(scores[4]),
 		      file=sys.stderr)
 		result = False
 	return result
@@ -98,7 +126,7 @@ def half_orc_qualified(scores):
 		result = False
 	return result
 
-def get_ancestry(scores):
+def get_ancestry(scores, is_pc):
 	is_masc = False
 	while True:
 		ancestry = input("Which ancestry do they belong to?\n" \
@@ -109,7 +137,9 @@ def get_ancestry(scores):
 			continue
 		is_masc = ui.is_masc(input("What type of build do they have?\n" \
 					   "Masculine or Feminine\n"))
-		if ui.is_dwarven(ancestry) and dwarven_qualified(scores):
+		if ui.is_dwarven(ancestry) and dwarven_qualified(scores, is_pc):
+			if not is_pc and (scores[0] < 17 or (scores[0] < 18 and is_masc)):
+				scores[0] = scores[0] + 1
 			if scores[0] > 17 and not is_masc:
 				print("STRENGTH: {} is too high for a feminine dwarf, reducing to 17".format(scores[0]),
 				      file=sys.stderr)
@@ -119,6 +149,10 @@ def get_ancestry(scores):
 				      file=sys.stderr)
 				scores[3] = 17
 			scores[4] = scores[4] + 1
+			if not is_pc and scores[4] < 19:
+				scores[4] = scores[4] + 1
+			if not is_pc and int(scores[5]) > 3:
+				scores[5] = int(scores[5]) - 1
 			if int(scores[5]) > 16:
 				print("CHARISMA: {} is too high for a dwarf, reducing to 16 for non-dwarves".format(scores[5]),
 				      file=sys.stderr)
@@ -126,19 +160,29 @@ def get_ancestry(scores):
 			else:
 				scores[5] = "{} ({})".format(scores[5] - 1, scores[5])
 			break
-		elif ui.is_elven(ancestry) and elven_qualified(scores):
+		elif ui.is_elven(ancestry) and elven_qualified(scores, is_pc):
 			if scores[0] > 16 and not is_masc:
 				print("STRENGTH: {} is too high for a feminine elf, reducing to 16".format(scores[0]),
 				      file=sys.stderr)
 				scores[0] = 16
+			if not is_pc and scores[1] < 18:
+				scores[1] = scores[1] + 1
 			scores[3] = scores[3] + 1
+			if not is_pc and scores[3] < 19:
+				scores[3] = scores[3] + 1
 			scores[4] = scores[4] - 1
 			break
-		elif ui.is_gnome(ancestry) and gnome_qualified(scores):
+		elif ui.is_gnome(ancestry) and gnome_qualified(scores, is_pc):
 			if scores[0] > 15 and not is_masc:
 				print("STRENGTH: {} is too high for a feminine gnome, reducing to 15".format(scores[0]),
 				      file=sys.stderr)
 				scores[0] = 15
+			if not is_pc and scores[2] < 18:
+				scores[2] = scores[2] + 1
+			if not is_pc and scores[4] < 18:
+				scores[4] = scores[4] + 1
+			if not is_pc and scores[5] > 3:
+				scores[5] = scores[5] - 1
 			break
 		elif ui.is_half_elven(ancestry) and half_elven_qualified(scores):
 			if scores[0] > 17 and not is_masc:
@@ -146,7 +190,7 @@ def get_ancestry(scores):
 				      file=sys.stderr)
 				scores[0] = 17
 			break
-		elif ui.is_halfling(ancestry) and halfling_qualified(scores):
+		elif ui.is_halfling(ancestry) and halfling_qualified(scores, is_pc):
 			if scores[0] > 15 and not is_masc:
 				print("STRENGTH: {} is too high for a feminine halfling, reducing to 14".format(scores[0]),
 				      file=sys.stderr)
@@ -159,6 +203,10 @@ def get_ancestry(scores):
 				scores[2] = 17
 			if scores[3] < 18:
 				scores[3] = scores[3] + 1
+			if not is_pc and scores[3] < 18:
+				scores[3] = scores[3] + 1
+			if not is_pc and scores[4] < 19:
+				scores[4] = scores[4] + 1
 			break
 		elif ui.is_half_orc(ancestry) and half_orc_qualified(scores):
 			if scores[0] < 18:
@@ -948,7 +996,7 @@ def generate_height_and_weight(ancestry, is_pc, is_masc):
 
 def main():
 	scores, is_pc = generate_scores()
-	ancestry, scores, is_masc = get_ancestry(scores)
+	ancestry, scores, is_masc = get_ancestry(scores, is_pc)
 	height, weight = generate_height_and_weight(ancestry, is_pc, is_masc)
 	return 0
 
