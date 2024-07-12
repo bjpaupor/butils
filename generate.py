@@ -1,3 +1,4 @@
+import re
 import sys
 import dice
 import ui
@@ -44,8 +45,8 @@ def elven_qualified(scores, is_pc):
 		print("CONSTITUTION: {} is too low for an elf, a minimum of 6 (adjusted) is required".format(scores[4]),
 		      file=sys.stderr)
 		result = False
-	elif scores[5] < 8:
-		print("CONSTITUTION: {} is too low for an elf, a minimum of 8 is required".format(scores[5]),
+	elif scores[4] < 8:
+		print("CONSTITUTION: {} is too low for an elf, a minimum of 8 is required".format(scores[4]),
 		      file=sys.stderr)
 		result = False
 	return result
@@ -287,14 +288,29 @@ def get_germane():
 	abilities = []
 	if len(sys.argv) < 3:
 		while True:
-			ability = int(input("Which ability is germane to their profession?\n" \
-					    "1. STRENGTH\n" \
-					    "2. INTELLIGENCE\n" \
-					    "3. WISDOM\n" \
-					    "4. DEXTERITY\n" \
-					    "5. CONSTITUTION\n" \
-					    "6. CHARISMA\n" \
-					    "7. No more abilities are germane\n"))
+			ability = 0
+			try:
+				ability = int(input("Which ability is germane to their profession (1-7)?\n" \
+						    "1. STRENGTH\n" \
+						    "2. INTELLIGENCE\n" \
+						    "3. WISDOM\n" \
+						    "4. DEXTERITY\n" \
+						    "5. CONSTITUTION\n" \
+						    "6. CHARISMA\n" \
+						    "7. No more abilities are germane\n"))
+			except ValueError as e:
+				if ui.is_strength(str(e)):
+					ability = 1
+				if ui.is_intelligence(str(e)):
+					ability = 2
+				if ui.is_wisdom(str(e)):
+					ability = 3
+				if ui.is_dexterity(str(e)):
+					ability = 4
+				if ui.is_constitution(str(e)):
+					ability = 5
+				if ui.is_charisma(str(e)):
+					ability = 6
 			if ability < 1 or ability > 7:
 				print("Invalid input: {}, expected 1-6".format(ability), file=sys.stderr)
 			elif ability < 7:
@@ -994,10 +1010,264 @@ def generate_height_and_weight(ancestry, is_pc, is_masc):
 	print("Weight: {} lbs.".format(weight))
 	return height, weight
 
+def get_charisma(scores):
+	if isinstance(scores[5], str):
+		return int(re.search(r'\d+', scores[5]).group())
+	return int(scores[5])
+
+def get_possible_classes(ancestry, is_pc, scores):
+	possible_classes = []
+	if ui.is_dwarven(ancestry):
+		if not is_pc:
+			possible_classes.append("cleric")
+		possible_classes.extend(["fighter", "thief", "assassin", "fighter/thief"])
+	elif ui.is_elven(ancestry):
+		if not is_pc:
+			possible_classes.append("cleric")
+		possible_classes.extend(["fighter", "thief", "assassin", \
+					 "fighter/magic-user", "fighter/thief", \
+					 "magic-user/thief", "fighter/magic-user/thief"])
+	elif ui.is_gnome(ancestry):
+		if not is_pc:
+			possible_classes.append("cleric")
+		possible_classes.extend(["fighter", "illusionist", "thief", "assassin", \
+					 "fighter/illusionist", "fighter/thief", \
+					 "figher/assassin", "illusionist/thief", \
+					 "illusionist/assassin"])
+	elif ui.is_half_elven(ancestry):
+		possible_classes.extend(["cleric", "druid", "fighter", "ranger", \
+					 "magic-user", "thief", "assassin", \
+					 "cleric/fighter", "cleric/ranger", \
+					 "cleric/magic-user", "fighter/magic-user", \
+					 "fighter/thief", "magic-user/thief", \
+					 "cleric/fighter/magic-user", \
+					 "fighter/magic-user/thief"])
+	elif ui.is_halfling(ancestry):
+		if not is_pc:
+			possible_classes.append("druid")
+		possible_classes.extend(["fighter", "thief", "fighter/thief"])
+	elif ui.is_half_orc(ancestry):
+		possible_classes.extend(["cleric", "fighter", "thief", "assassin", \
+					 "cleric/fighter", "cleric/thief", \
+					 "cleric/assassin", "fighter/thief", \
+					 "fighter/assassin"])
+	elif ui.is_human(ancestry):
+		possible_classes.extend(["cleric", "druid", "fighter", "paladin", "ranger", \
+					 "magic-user", "illusionist", "thief", "assassin", \
+					 "monk"])
+	else:
+		print("Invalid ancestry: {}\n".format(ancestry), file=sys.stderr)
+
+	if not is_pc:
+		possible_classes.extend(["laborer", "mercenary", "merchant", "trader"])
+
+	if is_pc and scores[2] < 9 and "cleric" in possible_classes:
+		possible_classes.remove("cleric")
+	if is_pc and scores[2] < 13 and ui.is_half_elven(ancestry):
+		possible_classes.remove("cleric/fighter")
+		possible_classes.remove("cleric/ranger")
+		possible_classes.remove("cleric/magic-user")
+		possible_classes.remove("cleric/figher/magic-user")
+	elif is_pc and scores[2] < 9 and ui.is_half_orc(ancestry):
+		possible_classes.remove("cleric/fighter")
+		possible_classes.remove("cleric/thief")
+		possible_classes.remove("cleric/assassin")
+	if ((is_pc and (scores[2] < 12 or get_charisma(scores) < 15)) or \
+		   (not is_pc and (scores[2] < 12 or get_charisma(scores) < 14))) and \
+		   "druid" in possible_classes:
+		possible_classes.remove("druid")
+	if is_pc and (scores[0] < 9 or scores[4] < 7) and "fighter" in possible_classes:
+		for class_option in possible_classes:
+			if "fighter" in class_option:
+				possible_classes.remove(class_option)
+	if ((is_pc and (scores[0] < 13 or scores[1] < 13 or scores[2] < 14 or scores[4] < 14)) or \
+		   (not is_pc and scores[2] < 12)) and "ranger" in possible_classes:
+		for class_option in possible_classes:
+			if "ranger" in class_option:
+				# NPC cleric/ranger could have 10 Wis + 2 from cleric
+				if not is_pc and scores[2] >= 10 and "cleric" in class_option:
+					continue
+				possible_classes.remove(class_option)
+	if ((is_pc and (scores[0] < 12 or scores[1] < 9 or scores[2] < 13 or scores[4] < 9 or get_charisma(scores) < 17)) or \
+		   (not is_pc and get_charisma(scores) < 17)) and "paladin" in possible_classes:
+		possible_classes.remove("paladin")
+	if is_pc and (scores[1] < 9 or scores[3] < 6) and "magic-user" in possible_classes:
+		for class_option in possible_classes:
+			if "magic-user" in class_option:
+				possible_classes.remove(class_option)
+	if ((is_pc and (scores[1] < 15 or scores[3] < 16)) or \
+		   (not is_pc and (scores[1] < 15 or scores[3] < 15))) and \
+		   "illusionist" in possible_classes:
+		for class_option in possible_classes:
+			if "illusionist" in class_option:
+				# NPC illusionist/(thief or assassin) could have 14 Int + 1 and/or 13 Dex + 2
+				if not is_pc and scores[1] >= 14 and scores[3] >= 13 and \
+					     ("thief" in class_option or "assassin" in class_option):
+					continue
+				possible_classes.remove(class_option)
+	if is_pc and scores[3] < 9 and "thief" in possible_classes:
+		for class_option in possible_classes:
+			if "thief" in class_option:
+				possible_classes.remove(class_option)
+	if is_pc and (scores[0] < 12 or scores[1] < 11 or scores[3] < 12) and \
+		   "assassin" in possible_classes:
+		for class_option in possible_classes:
+			if "assassin" in class_option:
+				possible_classes.remove(class_option)
+	if ((is_pc and (scores[0] < 15 or scores[2] < 15 or scores[3] < 15 or scores[4] < 11)) or \
+		   (not is_pc and (scores[0] < 12 or scores[2] < 15 or scores[3] < 15))) and \
+		   "monk" in possible_classes:
+		possible_classes.remove("monk")
+	if not is_pc and (scores[1] < 12 or get_charisma(scores) < 12):
+		possible_classes.remove("merchant")
+		possible_classes.remove("trader")
+
+	return possible_classes
+
+def adjust_strength(ancestry, is_masc, scores, mod):
+	scores[0] = scores[0] + mod
+	if ui.is_dwarven(ancestry):
+		if is_masc:
+			scores[0] = max(min(scores[0], 18), 8)
+		else:
+			scores[0] = max(min(scores[0], 17), 8)
+	elif ui.is_elven(ancestry) and not is_masc:
+		scores[0] = max(min(scores[0], 16), 3)
+	elif ui.is_gnome(ancestry):
+		if is_masc:
+			scores[0] = max(min(scores[0], 18), 6)
+		else:
+			scores[0] = max(min(scores[0], 15), 6)
+	elif ui.is_half_elven(ancestry) and not is_masc:
+		scores[0] = max(min(scores[0], 17), 3)
+	elif ui.is_halfling(ancestry):
+		if is_masc:
+			scores[0] = max(min(scores[0], 17), 6)
+		else:
+			scores[0] = max(min(scores[0], 14), 6)
+	elif ui.is_half_orc(ancestry):
+		scores[0] = max(min(scores[0], 18), 6)
+	else:
+		scores[0] = max(min(scores[0], 18), 3)
+	return scores
+
+def adjust_intelligence(ancestry, scores, mod):
+	scores[1] = scores[1] + mod
+	if ui.is_elven(ancestry):
+		scores[1] = max(min(scores[1], 18), 8)
+	elif ui.is_gnome(ancestry):
+		scores[1] = max(min(scores[1], 18), 7)
+	elif ui.is_half_elven(ancestry):
+		scores[1] = max(min(scores[1], 18), 4)
+	elif ui.is_halfling(ancestry):
+		scores[1] = max(min(scores[1], 18), 6)
+	elif ui.is_half_orc(ancestry):
+		scores[1] = max(min(scores[1], 17), 3)
+	else:
+		scores[1] = max(min(scores[1], 18), 3)
+	return scores
+
+def adjust_wisdom(ancestry, scores, mod):
+	scores[2] = scores[2] + mod
+	if ui.is_halfling(ancestry):
+		scores[2] = max(min(scores[2], 17), 3)
+	elif ui.is_half_orc(ancestry):
+		scores[2] = max(min(scores[2], 14), 3)
+	else:
+		scores[2] = max(min(scores[2], 18), 3)
+	return scores
+
+def adjust_dexterity(ancestry, scores, mod):
+	scores[3] = scores[3] + mod
+	if ui.is_dwarven(ancestry):
+		scores[3] = max(min(scores[3], 17), 3)
+	elif ui.is_elven(ancestry):
+		scores[3] = max(min(scores[3], 19), 7)
+	elif ui.is_half_elven(ancestry):
+		scores[3] = max(min(scores[3], 18), 6)
+	elif ui.is_halfling(ancestry):
+		scores[3] = max(min(scores[3], 18), 8)
+	elif ui.is_half_orc(ancestry):
+		scores[3] = max(min(scores[3], 17), 3)
+	else:
+		scores[3] = max(min(scores[3], 18), 3)
+	return scores
+
+def adjust_constitution(ancestry, scores, mod):
+	scores[4] = scores[4] + mod
+	if ui.is_dwarven(ancestry):
+		scores[4] = max(min(scores[4], 19), 12)
+	elif ui.is_elven(ancestry):
+		scores[4] = max(min(scores[4], 18), 6)
+	elif ui.is_gnome(ancestry):
+		scores[4] = max(min(scores[4], 18), 8)
+	elif ui.is_half_elven(ancestry):
+		scores[4] = max(min(scores[4], 18), 6)
+	elif ui.is_halfling(ancestry):
+		scores[4] = max(min(scores[4], 19), 10)
+	elif ui.is_half_orc(ancestry):
+		scores[4] = max(min(scores[4], 19), 13)
+	else:
+		scores[4] = max(min(scores[4], 18), 3)
+	return scores
+
+def get_class(ancestry, is_pc, is_masc, scores):
+	char_class = "none"
+	possible_classes = get_possible_classes(ancestry, is_pc, scores)
+	while char_class not in possible_classes:
+		char_class = input("Which class do they belong to?\n{}\n".format(possible_classes))
+		if char_class not in possible_classes:
+			print("Invalid class option: {}\n".format(char_class), file=sys.stderr)
+
+	if not is_pc:
+		if "cleric" in char_class:
+			scores = adjust_wisdom(ancestry, scores, 2)
+		if "fighter" in char_class or "ranger" in char_class or "paladin" in char_class:
+			scores = adjust_strength(ancestry, is_masc, scores, 2)
+			scores = adjust_constitution(ancestry, scores, 1)
+		if "magic-user" in char_class:
+			scores = adjust_intelligence(ancestry, scores, 2)
+			scores = adjust_dexterity(ancestry, scores, 1)
+		if "thief" in char_class or "assassin" in char_class:
+			scores = adjust_intelligence(ancestry, scores, 1)
+			scores = adjust_dexterity(ancestry, scores, 2)
+		if "assassin" in char_class:
+			scores = adjust_strength(ancestry, is_masc, scores, 1)
+		if "laborer" == char_class:
+			bonus = 0
+			while bonus < 1 or bonus > 3:
+				try:
+					bonus = int(input("What STRENGTH bonus (1-3) does this laborer gain?\n"))
+				except ValueError as e:
+					print("Invalid bonus: {}\n".format(str(e)), file=sys.stderr)
+			scores = adjust_strength(ancestry, is_masc, scores, bonus)
+		if "mercenary" == char_class:
+			scores = adjust_strength(ancestry, is_masc, scores, 1)
+			scores = adjust_constitution(ancestry, scores, 3)
+
+	if int(scores[0]) == 18 and "fighter" in char_class:
+		percent = dice.d100()
+		if (not is_masc and ui.is_human(ancestry)) or ui.is_gnome(ancestry):
+			percent = min(percent, 50)
+		elif (not is_masc and ui.is_half_orc(ancestry)) or ui.is_elven(ancestry):
+			percent = min(percent, 75)
+		elif ui.is_half_elven(ancestry):
+			percent = min(percent, 90)
+		elif ui.is_dwarven(ancestry) or ui.is_half_orc(ancestry):
+			percent = min(percent, 99)
+		percent = percent % 100
+		scores[0] = "18/{:02}".format(percent)
+
+	print("\nAdjusted scores:")
+	ui.print_scores(scores)
+	return char_class
+
 def main():
+	#scores = [STRENGTH, INTELLIGENCE, WISDOM, DEXTERITY, CONSTITUTION, CHARISMA]
 	scores, is_pc = generate_scores()
 	ancestry, scores, is_masc = get_ancestry(scores, is_pc)
 	height, weight = generate_height_and_weight(ancestry, is_pc, is_masc)
+	char_class = get_class(ancestry, is_pc, is_masc, scores)
 	return 0
 
 if __name__ == '__main__':

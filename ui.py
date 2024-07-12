@@ -7,6 +7,24 @@ def is_ancestry(option):
 	       is_half_elven(option) or is_halfling(option) or is_half_orc(option) or \
 	       is_human(option)
 
+def is_strength(option):
+	return "S" == option or "s" == option or "Str" in option or "str" in option
+
+def is_intelligence(option):
+	return "I" == option or "i" == option or "Int" in option or "int" in option
+
+def is_wisdom(option):
+	return "W" == option or "w" == option or "Wis" in option or "wis" in option
+
+def is_dexterity(option):
+	return "D" == option or "d" == option or "Dex" in option or "dex" in option
+
+def is_constitution(option):
+	return "Con" in option or "con" in option
+
+def is_charisma(option):
+	return "Cha" in option or "cha" in option or "Riz" in option or "riz" in option
+
 def is_dwarven(option):
 	return "Dwarven" in option or "dwarven" in option or "Dwarf" in option or "dwarf" in option
 
@@ -37,11 +55,13 @@ def is_masc(option):
 
 def print_scores(scores):
 	print("STRENGTH | INTELLIGENCE | WISDOM | DEXTERITY | CONSTITUTION | CHARISMA")
-	line = "{}       "
-	if scores[0] < 10:
-		line = line + " | "
-	else:
+	line = "{}    "
+	if isinstance(scores[0], str):
 		line = line + "| "
+	elif scores[0] < 10:
+		line = line + "    | "
+	else:
+		line = line + "   | "
 	line = line + "{}           "
 	if scores[1] < 10:
 		line = line + " | "
