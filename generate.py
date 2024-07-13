@@ -23,9 +23,13 @@ def dwarven_qualified(scores, is_pc):
 		result = False
 	return result
 
-def elven_qualified(scores, is_pc):
+def elven_qualified(ancestry, scores, is_pc):
 	result = True
-	if scores[1] < 8 and is_pc:
+	if is_pc and not ui.is_high_elf(ancestry):
+		print("Elven type: {} isn't allowed for player characters".format(ancestry),
+		      file=sys.stderr)
+		result = False
+	elif scores[1] < 8 and is_pc:
 		print("INTELLIGENCE: {} is too low for an elf, a minimum of 8 is required".format(scores[1]),
 		      file=sys.stderr)
 		result = False
@@ -129,10 +133,15 @@ def half_orc_qualified(scores):
 
 def get_ancestry(scores, is_pc):
 	is_masc = False
+	options = ""
+	if is_pc:
+		options = "([none], Mountain) Dwarven, Elven, Gnome, Half-Elven, Halfling, Half-Orc, or Human"
+	else:
+		options = "([none], Mountain) Dwarven, (Aquatic, Drow, Gray, High, Wood) Elven, " \
+			  "Gnome, Half-Elven, Halfling, Half-Orc, or Human"
 	while True:
-		ancestry = input("Which ancestry do they belong to?\n" \
-				 "([none], Mountain) Dwarven, (Aquatic, Drow, Gray, High, Wood) Elven, " \
-				 "Gnome, Half-Elven, Halfling, Half-Orc, or Human\n")
+
+		ancestry = input("Which ancestry do they belong to?\n{}\n".format(options))
 		if not ui.is_ancestry(ancestry):
 			print("Invalid ancestry option: {}\n".format(ancestry), file=sys.stderr)
 			continue
@@ -161,7 +170,7 @@ def get_ancestry(scores, is_pc):
 			else:
 				scores[5] = "{} ({})".format(scores[5] - 1, scores[5])
 			break
-		elif ui.is_elven(ancestry) and elven_qualified(scores, is_pc):
+		elif ui.is_elven(ancestry) and elven_qualified(ancestry, scores, is_pc):
 			if scores[0] > 16 and not is_masc:
 				print("STRENGTH: {} is too high for a feminine elf, reducing to 16".format(scores[0]),
 				      file=sys.stderr)
@@ -235,7 +244,7 @@ def get_ancestry(scores, is_pc):
 		elif ui.is_human(ancestry):
 			break
 		else:
-			print("Invalid option for rolled ability scores: {}\n".format(ancestry), file=sys.stderr)
+			print("Invalid option for rolled ability scores or character type: {}\n".format(ancestry), file=sys.stderr)
 
 	print("\nAdjusted scores:")
 	ui.print_scores(scores)
