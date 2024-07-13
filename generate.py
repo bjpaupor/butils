@@ -567,12 +567,6 @@ def generate_scores():
 			scores.append(scores_rolled[0])
 		case 3:
 			scores = method_3()
-			print("STRENGTH: {}".format(scores[0]))
-			print("INTELLIGENCE: {}".format(scores[1]))
-			print("WISDOM: {}".format(scores[2]))
-			print("DEXTERITY: {}".format(scores[3]))
-			print("CONSTITUTION: {}".format(scores[4]))
-			print("CHARISMA: {}".format(scores[5]))
 		case 4:
 			score_sets = method_4()
 			print("Select the most desirable single set of scores:")
@@ -621,12 +615,6 @@ def generate_scores():
 					print("Invalid selection, 1-12 expected", file=sys.stderr)
 		case 5:
 			scores = method_5()
-			print("STRENGTH: {}".format(scores[0]))
-			print("INTELLIGENCE: {}".format(scores[1]))
-			print("WISDOM: {}".format(scores[2]))
-			print("DEXTERITY: {}".format(scores[3]))
-			print("CONSTITUTION: {}".format(scores[4]))
-			print("CHARISMA: {}".format(scores[5]))
 		case 6:
 			raw_scores, method1_scores = method_6()
 			if raw_scores[0]:
@@ -663,12 +651,6 @@ def generate_scores():
 			scores = arrange_scores(raw_scores, method2_scores)
 		case 8:
 			scores = method_8()
-			print("STRENGTH: {}".format(scores[0]))
-			print("INTELLIGENCE: {}".format(scores[1]))
-			print("WISDOM: {}".format(scores[2]))
-			print("DEXTERITY: {}".format(scores[3]))
-			print("CONSTITUTION: {}".format(scores[4]))
-			print("CHARISMA: {}".format(scores[5]))
 		case 9:
 			score_sets = method_9()
 			print("Select the most desirable single set of scores:")
@@ -717,12 +699,6 @@ def generate_scores():
 					print("Invalid selection, 1-12 expected", file=sys.stderr)
 		case 10:
 			scores = method_10()
-			print("STRENGTH: {}".format(scores[0]))
-			print("INTELLIGENCE: {}".format(scores[1]))
-			print("WISDOM: {}".format(scores[2]))
-			print("DEXTERITY: {}".format(scores[3]))
-			print("CONSTITUTION: {}".format(scores[4]))
-			print("CHARISMA: {}".format(scores[5]))
 
 	print("\nInitial scores:")
 	ui.print_scores(scores)
