@@ -25,12 +25,32 @@ def is_constitution(option):
 def is_charisma(option):
 	return "Cha" in option or "cha" in option or "Riz" in option or "riz" in option
 
+def is_mountain_dwarf(option):
+	return "Mountain" in option or "mountain" in option
+
 def is_dwarven(option):
 	return "Dwarven" in option or "dwarven" in option or "Dwarf" in option or "dwarf" in option
 
-# equal to avoid miscompare with Half-Elven characters
+def is_aquatic_elf(option):
+	return "Aquatic" in option or "aquatic" in option
+
+def is_drow_elf(option):
+	return "Drow" in option or "drow" in option
+
+def is_gray_elf(option):
+	return "Gray" in option or "gray" in option or "Grey" in option or "grey" in option
+
+def is_high_elf(option):
+	return "High" in option or "high" in option or \
+	       "Elven" == option or "elven" == option or "Elf" == option or "elf" == option
+
+def is_wood_elf(option):
+	return "Wood" in option or "wood" in option
+
 def is_elven(option):
-	return "Elven" == option or "elven" == option or "Elf" == option or "elf" == option
+	return ("Elven" in option or "elven" in option or "Elf" in option or "elf" in option) and \
+	       (is_aquatic_elf(option) or is_drow_elf(option) or is_gray_elf(option) or \
+	        is_high_elf(option) or is_wood_elf(option))
 
 def is_gnome(option):
 	return "Gnome" in option or "gnome" in option or "Gnomish" in option or "gnomish" in option
@@ -85,3 +105,17 @@ def print_scores(scores):
 	line = line + "{}"
 	print(line.format(scores[0], scores[1], scores[2], scores[3], scores[4], scores[5]))
 	print("----------------------------------------------------------------------\n")
+
+def print_height_and_weight(height, weight):
+	feet = int(height / 12)
+	inches = height % 12
+	print("Height: {}'' ({}' {}''), Weight: {} lbs.".format(height, feet, inches, weight))
+
+def display_character(ancestry, scores, is_masc, height, weight, char_class, age):
+	if is_masc:
+		print("{} {} {}".format("Masculine", ancestry, char_class))
+	else:
+		print("{} {} {}".format("Feminine", ancestry, char_class))
+	print_height_and_weight(height, weight)
+	print("Age: {} years".format(age))
+	print_scores(scores)

@@ -131,8 +131,8 @@ def get_ancestry(scores, is_pc):
 	is_masc = False
 	while True:
 		ancestry = input("Which ancestry do they belong to?\n" \
-				 "Dwarven, Elven, Gnome, Half-Elven, Halfling, Half-Orc, or " \
-				 "Human\n")
+				 "([none], Mountain) Dwarven, (Aquatic, Drow, Gray, High, Wood) Elven, " \
+				 "Gnome, Half-Elven, Halfling, Half-Orc, or Human\n")
 		if not ui.is_ancestry(ancestry):
 			print("Invalid ancestry option: {}\n".format(ancestry), file=sys.stderr)
 			continue
@@ -1004,11 +1004,13 @@ def generate_height_and_weight(ancestry, is_pc, is_masc):
 	else:
 		print("Unknown ancestry: {}, unable to generate height/weight".format(ancestry), \
 		      sys.stderr)
-	feet = int(height / 12)
-	inches = height % 12
-	print("Height: {}'' ({}' {}'')".format(height, feet, inches))
-	print("Weight: {} lbs.".format(weight))
+	ui.print_height_and_weight(height, weight)
 	return height, weight
+
+def get_strength(scores):
+	if isinstance(scores[0], str):
+		return int(re.search(r'\d+', scores[0]).group())
+	return int(scores[0])
 
 def get_charisma(scores):
 	if isinstance(scores[5], str):
@@ -1024,7 +1026,7 @@ def get_possible_classes(ancestry, is_pc, scores):
 	elif ui.is_elven(ancestry):
 		if not is_pc:
 			possible_classes.append("cleric")
-		possible_classes.extend(["fighter", "thief", "assassin", \
+		possible_classes.extend(["fighter", "magic-user", "thief", "assassin", \
 					 "fighter/magic-user", "fighter/thief", \
 					 "magic-user/thief", "fighter/magic-user/thief"])
 	elif ui.is_gnome(ancestry):
@@ -1035,7 +1037,7 @@ def get_possible_classes(ancestry, is_pc, scores):
 					 "figher/assassin", "illusionist/thief", \
 					 "illusionist/assassin"])
 	elif ui.is_half_elven(ancestry):
-		possible_classes.extend(["cleric", "druid", "fighter", "ranger", \
+		possible_classes.extend(["bard", "cleric", "druid", "fighter", "ranger", \
 					 "magic-user", "thief", "assassin", \
 					 "cleric/fighter", "cleric/ranger", \
 					 "cleric/magic-user", "fighter/magic-user", \
@@ -1052,7 +1054,7 @@ def get_possible_classes(ancestry, is_pc, scores):
 					 "cleric/assassin", "fighter/thief", \
 					 "fighter/assassin"])
 	elif ui.is_human(ancestry):
-		possible_classes.extend(["cleric", "druid", "fighter", "paladin", "ranger", \
+		possible_classes.extend(["bard", "cleric", "druid", "fighter", "paladin", "ranger", \
 					 "magic-user", "illusionist", "thief", "assassin", \
 					 "monk"])
 	else:
@@ -1061,6 +1063,10 @@ def get_possible_classes(ancestry, is_pc, scores):
 	if not is_pc:
 		possible_classes.extend(["laborer", "mercenary", "merchant", "trader"])
 
+	if (scores[0] < 15 or scores[1] < 12 or scores[2] < 15 or \
+	    scores[3] < 15 or scores[4] < 10 or scores[5] < 15) and \
+	    "bard" in possible_classes:
+		possible_classes.remove("bard")
 	if is_pc and scores[2] < 9 and "cleric" in possible_classes:
 		possible_classes.remove("cleric")
 	if is_pc and scores[2] < 13 and ui.is_half_elven(ancestry):
@@ -1245,6 +1251,254 @@ def get_class(ancestry, is_pc, is_masc, scores):
 			scores = adjust_strength(ancestry, is_masc, scores, 1)
 			scores = adjust_constitution(ancestry, scores, 3)
 
+	return char_class, scores
+
+def apply_age_mods(ancestry, age, char_class, is_masc, scores, young, mature, middle, old, venerable):
+	if age >= young:
+		scores = adjust_wisdom(ancestry, scores, -1)
+		if scores[4] <= 17:
+			scores = adjust_constitution(ancestry, scores, 1)
+	if age >= mature:
+		if get_strength(scores) <= 17:
+			scores = adjust_strength(ancestry, is_masc, scores, 1)
+			if get_strength(scores) == 18:
+				scores = generate_exceptional_strength(ancestry, char_class, is_masc, scores)
+		scores = adjust_wisdom(ancestry, scores, 1)
+	if age >= middle:
+		if get_strength(scores) == 18:
+			exceptional = int(scores[0].split("/")[1]) / 2
+			scores[0] = "18/{}".format(exceptional)
+		else:
+			scores = adjust_strength(ancestry, is_masc, scores, -1)
+		scores = adjust_constitution(ancestry, scores, -1)
+		if scores[1] <= 17:
+			scores = adjust_intelligence(ancestry, scores, 1)
+		scores = adjust_wisdom(ancestry, scores, 1)
+	if age >= old:
+		scores = adjust_strength(ancestry, is_masc, scores, -2)
+		scores = adjust_dexterity(ancestry, scores, -2)
+		scores = adjust_constitution(ancestry, scores, -1)
+		scores = adjust_wisdom(ancestry, scores, 1)
+	if age >= venerable:
+		scores = adjust_strength(ancestry, is_masc, scores, -1)
+		scores = adjust_dexterity(ancestry, scores, -1)
+		scores = adjust_constitution(ancestry, scores, -1)
+		if scores[1] <= 17:
+			scores = adjust_intelligence(ancestry, scores, 1)
+		scores = adjust_wisdom(ancestry, scores, 1)
+	return scores
+
+def generate_dwarven_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	if "cleric" in char_class:
+		age = 250
+		if "cleric" == char_class:
+			age = age + dice.d(2, 20)
+		else:
+			age = age + 40
+	elif "thief" in char_class or "assassin" in char_class:
+		age = 75
+		if "thief" == char_class or "assassin" == char_class:
+			age = age + dice.d(3, 6)
+		else:
+			age = age + 18
+	elif "fighter" in char_class:
+		age = 40 + dice.d(5, 4)
+
+	if ui.is_mountain_dwarf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					40, 61, 176, 276, 401)
+	else:
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					35, 51, 151, 251, 351)
+	return age, scores
+
+def generate_elven_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	if "cleric" in char_class:
+		age = 500
+		if "cleric" == char_class:
+			age = age + dice.d(10, 10)
+		else:
+			age = age + 100
+	elif "magic-user" in char_class:
+		age = 150
+		if "magic-user" == char_class:
+			age = age + dice.d(5, 6)
+		else:
+			age = age + 30
+	elif "fighter" in char_class:
+		age = 130
+		if "fighter" == char_class:
+			age = age + dice.d(5, 6)
+		else:
+			age = age + 30
+	elif "thief" in char_class or "assassin" in char_class:
+		age = 100 + dice.d(5, 6)
+
+	if ui.is_aquatic_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					75, 151, 451, 701, 1001)
+	elif ui.is_drow_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					50, 101, 401, 601, 801)
+	elif ui.is_gray_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					150, 251, 651, 1001, 1501)
+	elif ui.is_high_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					100, 176, 551, 876, 1201)
+	elif ui.is_wood_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					75, 151, 501, 801, 1101)
+
+	return age, scores
+
+def generate_gnome_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	if "cleric" in char_class:
+		age = 300
+		if "cleric" == char_class:
+			age = age + dice.d(3, 12)
+		else:
+			age = age + 36
+	elif "illusionist" in char_class:
+		age = 100
+		if "illusionist" == char_class:
+			age = age + dice.d(2, 12)
+		else:
+			age = age + 24
+	elif "thief" in char_class or "assassin" in char_class:
+		age = 80
+		if "thief" == char_class or "assassin" == char_class:
+			age = age + dice.d(5, 4)
+		else:
+			age = age + 20
+	elif "fighter" in char_class:
+		age = 60 + dice.d(5, 4)
+
+	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+				50, 91, 301, 451, 601)
+	return age, scores
+
+def generate_half_elven_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	if "cleric" in char_class or "druid" in char_class:
+		age = 40
+		if "cleric" == char_class or "druid" == char_class:
+			age = age + dice.d(2, 4)
+		else:
+			age = age + 8
+	elif "magic-user" in char_class:
+		age = 30
+		if "magic-user" == char_class:
+			age = age + dice.d(2, 8)
+		else:
+			age = age + 16
+	elif "thief" in char_class or "assassin" in char_class:
+		age = 22
+		if "thief" == char_class or "assassin" == char_class:
+			age = age + dice.d(3, 8)
+		else:
+			age = age + 24
+	elif "bard" in char_class or "fighter" in char_class or "ranger" in char_class:
+		age = 22 + dice.d(3, 4)
+
+	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+				24, 41, 101, 176, 251)
+	return age, scores
+
+def generate_halfling_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	# The rules don't cover this, so I'm deciding that 60+4d4 is appropriate:
+	# - Other NPC Cleric options generally give middle-aged results
+	# - Elves of various types could be Mature, so that's also allowed here
+	if "druid" in char_class:
+		age = 60
+		if "druid" == char_class:
+			age = age + dice.d(4, 4)
+		else:
+			age = age + 16
+	elif "thief" in char_class:
+		age = 40
+		if "thief" == char_class:
+			age = age + dice.d(2, 4)
+		else:
+			age = age + 8
+	elif "fighter" in char_class:
+		age = 20 + dice.d(3, 4)
+
+	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+				22, 34, 69, 102, 145)
+	return age, scores
+
+def generate_half_orc_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	if "thief" in char_class or "assassin" in char_class:
+		age = 20
+		if "thief" == char_class or "assassin" == char_class:
+			age = age + dice.d(2, 4)
+		else:
+			age = age + 8
+	elif "cleric" in char_class:
+		age = 20
+		if "cleric" == char_class:
+			age = age + dice.d(1, 4)
+		else:
+			age = age + 4
+	elif "fighter" in char_class:
+		age = 13 + dice.d(1, 4)
+
+	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+				12, 16, 31, 46, 61)
+	return age, scores
+
+def generate_human_age(ancestry, char_class, is_masc, scores):
+	age = 0
+	if "illusionist" == char_class:
+		age = 30 + dice.d(1, 6)
+	elif "magic-user" == char_class:
+		age = 24 + dice.d(2, 8)
+	elif "monk" == char_class:
+		age = 21 + dice.d(1, 4)
+	elif "assassin" == char_class or "ranger" == char_class:
+		age = 20 + dice.d(1, 4)
+	elif "cleric" == char_class or "druid" == char_class or "thief" == char_class:
+		age = 18 + dice.d(1, 4)
+	elif "paladin" == char_class:
+		age = 17 + dice.d(1, 4)
+	elif "bard" == char_class or "fighter" == char_class:
+		age = 15 + dice.d(1, 4)
+
+	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+				14, 21, 41, 61, 91)
+	return age, scores
+
+def generate_age(ancestry, is_pc, char_class, is_masc, scores):
+	age = 0
+	if not is_pc and (char_class == "laborer" or char_class == "mercenary" or char_class == "merchant" \
+	   or char_class == "trader" or ui.is_negative(input("Is this NPC a henchman or otherwise using a rolled age?\n"))):
+		age = int(input("How many years old is this character?\n"))
+	else:
+		if ui.is_dwarven(ancestry):
+			age, scores = generate_dwarven_age(ancestry, char_class, is_masc, scores)
+		elif ui.is_elven(ancestry):
+			age, scores = generate_elven_age(ancestry, char_class, is_masc, scores)
+		elif ui.is_gnome(ancestry):
+			age, scores = generate_gnome_age(ancestry, char_class, is_masc, scores)
+		elif ui.is_half_elven(ancestry):
+			age, scores = generate_half_elven_age(ancestry, char_class, is_masc, scores)
+		elif ui.is_halfling(ancestry):
+			age, scores = generate_halfling_age(ancestry, char_class, is_masc, scores)
+		elif ui.is_half_orc(ancestry):
+			age, scores = generate_half_orc_age(ancestry, char_class, is_masc, scores)
+		elif ui.is_human(ancestry):
+			age, scores = generate_human_age(ancestry, char_class, is_masc, scores)
+
+	print("Age: {} years".format(age))
+	return age, scores
+
+def generate_exceptional_strength(ancestry, char_class, is_masc, scores):
 	if int(scores[0]) == 18 and "fighter" in char_class:
 		percent = dice.d100()
 		if (not is_masc and ui.is_human(ancestry)) or ui.is_gnome(ancestry):
@@ -1260,14 +1514,19 @@ def get_class(ancestry, is_pc, is_masc, scores):
 
 	print("\nAdjusted scores:")
 	ui.print_scores(scores)
-	return char_class
+	return scores
 
 def main():
 	#scores = [STRENGTH, INTELLIGENCE, WISDOM, DEXTERITY, CONSTITUTION, CHARISMA]
 	scores, is_pc = generate_scores()
 	ancestry, scores, is_masc = get_ancestry(scores, is_pc)
 	height, weight = generate_height_and_weight(ancestry, is_pc, is_masc)
-	char_class = get_class(ancestry, is_pc, is_masc, scores)
+	char_class, scores = get_class(ancestry, is_pc, is_masc, scores)
+	age, scores  = generate_age(ancestry, is_pc, char_class, is_masc, scores)
+	if not isinstance(scores[0], str):
+		scores = generate_exceptional_strength(ancestry, char_class, is_masc, scores)
+
+	ui.display_character(ancestry, scores, is_masc, height, weight, char_class, age)
 	return 0
 
 if __name__ == '__main__':
