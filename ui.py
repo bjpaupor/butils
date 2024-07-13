@@ -112,6 +112,7 @@ def print_height_and_weight(height, weight):
 	print("Height: {}'' ({}' {}''), Weight: {} lbs.".format(height, feet, inches, weight))
 
 def display_character(ancestry, scores, is_masc, height, weight, char_class, age):
+	print("\nGenerated Character:")
 	if is_masc:
 		print("{} {} {}".format("Masculine", ancestry, char_class))
 	else:
