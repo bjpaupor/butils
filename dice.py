@@ -1,4 +1,5 @@
 import random
+import sys
 
 def d(num, dice):
 	value = 0
@@ -29,3 +30,15 @@ def d20():
 
 def d100():
 	return random.randrange(100) + 1
+
+def main():
+	num = 1
+	dice = 20
+	if len(sys.argv) == 2:
+		num = int(sys.argv[1].split("d")[0])
+		dice = int(sys.argv[1].split("d")[1])
+	print(d(num, dice))
+	return 0
+
+if __name__ == '__main__':
+	sys.exit(main())
