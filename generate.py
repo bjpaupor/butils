@@ -1273,7 +1273,7 @@ def apply_age_mods(ancestry, age, char_class, is_masc, scores, young, mature, mi
 		scores = adjust_wisdom(ancestry, scores, 1)
 	return scores
 
-def generate_dwarven_age(ancestry, char_class, is_masc, scores):
+def generate_dwarven_age(char_class):
 	age = 0
 	if "cleric" in char_class:
 		age = 250
@@ -1290,15 +1290,9 @@ def generate_dwarven_age(ancestry, char_class, is_masc, scores):
 	elif "fighter" in char_class:
 		age = 40 + dice.d(5, 4)
 
-	if ui.is_mountain_dwarf(ancestry):
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					40, 61, 176, 276, 401)
-	else:
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					35, 51, 151, 251, 351)
-	return age, scores
+	return age
 
-def generate_elven_age(ancestry, char_class, is_masc, scores):
+def generate_elven_age(char_class):
 	age = 0
 	if "cleric" in char_class:
 		age = 500
@@ -1321,25 +1315,9 @@ def generate_elven_age(ancestry, char_class, is_masc, scores):
 	elif "thief" in char_class or "assassin" in char_class:
 		age = 100 + dice.d(5, 6)
 
-	if ui.is_aquatic_elf(ancestry):
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					75, 151, 451, 701, 1001)
-	elif ui.is_drow_elf(ancestry):
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					50, 101, 401, 601, 801)
-	elif ui.is_gray_elf(ancestry):
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					150, 251, 651, 1001, 1501)
-	elif ui.is_high_elf(ancestry):
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					100, 176, 551, 876, 1201)
-	elif ui.is_wood_elf(ancestry):
-		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-					75, 151, 501, 801, 1101)
+	return age
 
-	return age, scores
-
-def generate_gnome_age(ancestry, char_class, is_masc, scores):
+def generate_gnome_age(char_class):
 	age = 0
 	if "cleric" in char_class:
 		age = 300
@@ -1362,11 +1340,9 @@ def generate_gnome_age(ancestry, char_class, is_masc, scores):
 	elif "fighter" in char_class:
 		age = 60 + dice.d(5, 4)
 
-	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-				50, 91, 301, 451, 601)
-	return age, scores
+	return age
 
-def generate_half_elven_age(ancestry, char_class, is_masc, scores):
+def generate_half_elven_age(char_class):
 	age = 0
 	if "cleric" in char_class or "druid" in char_class:
 		age = 40
@@ -1389,11 +1365,9 @@ def generate_half_elven_age(ancestry, char_class, is_masc, scores):
 	elif "bard" in char_class or "fighter" in char_class or "ranger" in char_class:
 		age = 22 + dice.d(3, 4)
 
-	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-				24, 41, 101, 176, 251)
-	return age, scores
+	return age
 
-def generate_halfling_age(ancestry, char_class, is_masc, scores):
+def generate_halfling_age(char_class):
 	age = 0
 	# The rules don't cover this, so I'm deciding that 60+4d4 is appropriate:
 	# - Other NPC Cleric options generally give middle-aged results
@@ -1413,11 +1387,9 @@ def generate_halfling_age(ancestry, char_class, is_masc, scores):
 	elif "fighter" in char_class:
 		age = 20 + dice.d(3, 4)
 
-	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-				22, 34, 69, 102, 145)
-	return age, scores
+	return age
 
-def generate_half_orc_age(ancestry, char_class, is_masc, scores):
+def generate_half_orc_age(char_class):
 	age = 0
 	if "thief" in char_class or "assassin" in char_class:
 		age = 20
@@ -1434,11 +1406,9 @@ def generate_half_orc_age(ancestry, char_class, is_masc, scores):
 	elif "fighter" in char_class:
 		age = 13 + dice.d(1, 4)
 
-	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-				12, 16, 31, 46, 61)
-	return age, scores
+	return age
 
-def generate_human_age(ancestry, char_class, is_masc, scores):
+def generate_human_age(char_class):
 	age = 0
 	if "illusionist" == char_class:
 		age = 30 + dice.d(1, 6)
@@ -1455,9 +1425,54 @@ def generate_human_age(ancestry, char_class, is_masc, scores):
 	elif "bard" == char_class or "fighter" == char_class:
 		age = 15 + dice.d(1, 4)
 
-	scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
-				14, 21, 41, 61, 91)
-	return age, scores
+	return age
+
+def apply_dwarven_age(ancestry, age, char_class, is_masc, scores):
+	if ui.is_mountain_dwarf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					40, 61, 176, 276, 401)
+	else:
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					35, 51, 151, 251, 351)
+	return scores
+
+def apply_elven_age(ancestry, age, char_class, is_masc, scores):
+	if ui.is_aquatic_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					75, 151, 451, 701, 1001)
+	elif ui.is_drow_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					50, 101, 401, 601, 801)
+	elif ui.is_gray_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					150, 251, 651, 1001, 1501)
+	elif ui.is_high_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					100, 176, 551, 876, 1201)
+	elif ui.is_wood_elf(ancestry):
+		scores = apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+					75, 151, 501, 801, 1101)
+	return scores
+
+def apply_gnome_age(ancestry, age, char_class, is_masc, scores):
+	return apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+			      50, 91, 301, 451, 601)
+
+def apply_half_elven_age(ancestry, age, char_class, is_masc, scores):
+	return apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+			      24, 41, 101, 176, 251)
+
+def apply_halfling_age(ancestry, age, char_class, is_masc, scores):
+	return apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+			      22, 34, 69, 102, 145)
+
+def apply_half_orc_age(ancestry, age, char_class, is_masc, scores):
+	return apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+			      12, 16, 31, 46, 61)
+
+def apply_human_age(ancestry, age, char_class, is_masc, scores):
+	return apply_age_mods(ancestry, age, char_class, is_masc, scores, \
+			      14, 21, 41, 61, 91)
 
 def generate_age(ancestry, is_pc, char_class, is_masc, scores):
 	age = 0
@@ -1466,19 +1481,34 @@ def generate_age(ancestry, is_pc, char_class, is_masc, scores):
 		age = int(input("How many years old is this character?\n"))
 	else:
 		if ui.is_dwarven(ancestry):
-			age, scores = generate_dwarven_age(ancestry, char_class, is_masc, scores)
+			age = generate_dwarven_age(char_class)
 		elif ui.is_elven(ancestry):
-			age, scores = generate_elven_age(ancestry, char_class, is_masc, scores)
+			age = generate_elven_age(char_class)
 		elif ui.is_gnome(ancestry):
-			age, scores = generate_gnome_age(ancestry, char_class, is_masc, scores)
+			age = generate_gnome_age(char_class)
 		elif ui.is_half_elven(ancestry):
-			age, scores = generate_half_elven_age(ancestry, char_class, is_masc, scores)
+			age = generate_half_elven_age(char_class)
 		elif ui.is_halfling(ancestry):
-			age, scores = generate_halfling_age(ancestry, char_class, is_masc, scores)
+			age = generate_halfling_age(char_class)
 		elif ui.is_half_orc(ancestry):
-			age, scores = generate_half_orc_age(ancestry, char_class, is_masc, scores)
+			age = generate_half_orc_age(char_class)
 		elif ui.is_human(ancestry):
-			age, scores = generate_human_age(ancestry, char_class, is_masc, scores)
+			age = generate_human_age(char_class)
+
+	if ui.is_dwarven(ancestry):
+		scores = apply_dwarven_age(ancestry, age, char_class, is_masc, scores)
+	elif ui.is_elven(ancestry):
+		scores = apply_elven_age(ancestry, age, char_class, is_masc, scores)
+	elif ui.is_gnome(ancestry):
+		scores = apply_gnome_age(ancestry, age, char_class, is_masc, scores)
+	elif ui.is_half_elven(ancestry):
+		scores = apply_half_elven_age(ancestry, age, char_class, is_masc, scores)
+	elif ui.is_halfling(ancestry):
+		scores = apply_halfling_age(ancestry, age, char_class, is_masc, scores)
+	elif ui.is_half_orc(ancestry):
+		scores = apply_half_orc_age(ancestry, age, char_class, is_masc, scores)
+	elif ui.is_human(ancestry):
+		scores = apply_human_age(ancestry, age, char_class, is_masc, scores)
 
 	print("Age: {} years".format(age))
 	return age, scores
