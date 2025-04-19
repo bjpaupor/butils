@@ -1099,29 +1099,31 @@ def get_possible_classes(ancestry, is_pc, scores):
 	if not is_pc:
 		possible_classes.extend(["laborer", "mercenary", "merchant", "trader"])
 
+	possible_classes_dupe = possible_classes.copy()
+
 	if (scores[0] < 15 or scores[1] < 12 or scores[2] < 15 or \
 	    scores[3] < 15 or scores[4] < 10 or scores[5] < 15) and \
 	    "bard" in possible_classes:
-		possible_classes.remove("bard")
+		possible_classes_dupe.remove("bard")
 	if is_pc and scores[2] < 9 and "cleric" in possible_classes:
-		possible_classes.remove("cleric")
+		possible_classes_dupe.remove("cleric")
 	if is_pc and scores[2] < 13 and ui.is_half_elven(ancestry):
-		possible_classes.remove("cleric/fighter")
-		possible_classes.remove("cleric/ranger")
-		possible_classes.remove("cleric/magic-user")
-		possible_classes.remove("cleric/figher/magic-user")
+		possible_classes_dupe.remove("cleric/fighter")
+		possible_classes_dupe.remove("cleric/ranger")
+		possible_classes_dupe.remove("cleric/magic-user")
+		possible_classes_dupe.remove("cleric/figher/magic-user")
 	elif is_pc and scores[2] < 9 and ui.is_half_orc(ancestry):
-		possible_classes.remove("cleric/fighter")
-		possible_classes.remove("cleric/thief")
-		possible_classes.remove("cleric/assassin")
+		possible_classes_dupe.remove("cleric/fighter")
+		possible_classes_dupe.remove("cleric/thief")
+		possible_classes_dupe.remove("cleric/assassin")
 	if ((is_pc and (scores[2] < 12 or get_charisma(scores) < 15)) or \
 		   (not is_pc and (scores[2] < 12 or get_charisma(scores) < 14))) and \
 		   "druid" in possible_classes:
-		possible_classes.remove("druid")
+		possible_classes_dupe.remove("druid")
 	if is_pc and (scores[0] < 9 or scores[4] < 7) and "fighter" in possible_classes:
 		for class_option in possible_classes:
 			if "fighter" in class_option:
-				possible_classes.remove(class_option)
+				possible_classes_dupe.remove(class_option)
 	if ((is_pc and (scores[0] < 13 or scores[1] < 13 or scores[2] < 14 or scores[4] < 14)) or \
 		   (not is_pc and scores[2] < 12)) and "ranger" in possible_classes:
 		for class_option in possible_classes:
@@ -1129,14 +1131,14 @@ def get_possible_classes(ancestry, is_pc, scores):
 				# NPC cleric/ranger could have 10 Wis + 2 from cleric
 				if not is_pc and scores[2] >= 10 and "cleric" in class_option:
 					continue
-				possible_classes.remove(class_option)
+				possible_classes_dupe.remove(class_option)
 	if ((is_pc and (scores[0] < 12 or scores[1] < 9 or scores[2] < 13 or scores[4] < 9 or get_charisma(scores) < 17)) or \
 		   (not is_pc and get_charisma(scores) < 17)) and "paladin" in possible_classes:
-		possible_classes.remove("paladin")
+		possible_classes_dupe.remove("paladin")
 	if is_pc and (scores[1] < 9 or scores[3] < 6) and "magic-user" in possible_classes:
 		for class_option in possible_classes:
 			if "magic-user" in class_option:
-				possible_classes.remove(class_option)
+				possible_classes_dupe.remove(class_option)
 	if ((is_pc and (scores[1] < 15 or scores[3] < 16)) or \
 		   (not is_pc and (scores[1] < 15 or scores[3] < 15))) and \
 		   "illusionist" in possible_classes:
@@ -1146,25 +1148,25 @@ def get_possible_classes(ancestry, is_pc, scores):
 				if not is_pc and scores[1] >= 14 and scores[3] >= 13 and \
 					     ("thief" in class_option or "assassin" in class_option):
 					continue
-				possible_classes.remove(class_option)
+				possible_classes_dupe.remove(class_option)
 	if is_pc and scores[3] < 9 and "thief" in possible_classes:
 		for class_option in possible_classes:
 			if "thief" in class_option:
-				possible_classes.remove(class_option)
+				possible_classes_dupe.remove(class_option)
 	if is_pc and (scores[0] < 12 or scores[1] < 11 or scores[3] < 12) and \
 		   "assassin" in possible_classes:
 		for class_option in possible_classes:
 			if "assassin" in class_option:
-				possible_classes.remove(class_option)
+				possible_classes_dupe.remove(class_option)
 	if ((is_pc and (scores[0] < 15 or scores[2] < 15 or scores[3] < 15 or scores[4] < 11)) or \
 		   (not is_pc and (scores[0] < 12 or scores[2] < 15 or scores[3] < 15))) and \
 		   "monk" in possible_classes:
-		possible_classes.remove("monk")
+		possible_classes_dupe.remove("monk")
 	if not is_pc and (scores[1] < 12 or get_charisma(scores) < 12):
-		possible_classes.remove("merchant")
-		possible_classes.remove("trader")
+		possible_classes_dupe.remove("merchant")
+		possible_classes_dupe.remove("trader")
 
-	return possible_classes
+	return possible_classes_dupe
 
 def adjust_strength(ancestry, is_masc, scores, mod):
 	scores[0] = scores[0] + mod
