@@ -252,31 +252,34 @@ def get_ancestry(scores, is_pc):
 
 def get_germane_method():
 	while True:
-		# Only player options are reported
 		response = int(input("Which method should be used for germane abilities?\n" \
 				     "1. 4d6 - lowest, scores manually ordered\n" \
 				     "2. 3d6 12 times, highest 6 manually ordered\n" \
 				     "3. 3d6 6 times in order, highest of each\n" \
 				     "4. 3d6 12 times in order, manually chosen\n" \
-				     "5. 3d6 with +1 to each die < 6\n"))
-		if response > 0 and response < 6:
+				     "5. 3d6 with +1 to each die < 6\n" \
+				     "6. manually rolled but need to be ordered\n" \
+				     "7. manually rolled and already ordered\n"))
+		if response > 0 and response < 8:
+			response = response + 7
 			break
 		else:
-			print("Invalid option: {}, expected 1-4".format(response), file=sys.stderr)
-	return response + 5
+			print("Invalid option: {}, expected 1-7".format(response), file=sys.stderr)
+	return response
 
 def get_pc_method():
 	while True:
-		# Only player options are reported
 		response = int(input("Which method would you like to use?\n" \
 				     "1. 4d6 - lowest, scores manually ordered\n" \
 				     "2. 3d6 12 times, highest 6 manually ordered\n" \
 				     "3. 3d6 6 times in order, highest of each\n" \
-				     "4. 3d6 12 times in order, manually chosen\n"))
-		if response > 0 and response < 11:
+				     "4. 3d6 12 times in order, manually chosen\n" \
+				     "5. manually rolled but need to be ordered\n" \
+				     "6. manually rolled and already ordered\n"))
+		if response > 0 and response < 7:
 			break
 		else:
-			print("Invalid option: {}, expected 1-4".format(response), file=sys.stderr)
+			print("Invalid option: {}, expected 1-6".format(response), file=sys.stderr)
 	return response
 
 def get_method():
@@ -284,7 +287,7 @@ def get_method():
 	if len(sys.argv) < 2:
 		if ui.is_negative(input("Is this character determined as a Player Character?\n")):
 			if ui.is_negative(input("Is this NPC special?\n")):
-				method = 5
+				method = 7
 			else:
 				method = get_germane_method()
 		else:
@@ -379,8 +382,33 @@ def method_4():
 		score_sets.append(scores)
 	return score_sets
 
-# General Characters
 def method_5():
+	scores = []
+	for _ in range(6):
+		while True:
+			response = int(input("What was determined for this score?\n"))
+			if response > 0:
+				break
+			else:
+				print("Invalid score: {}, expected positive".format(response), file=sys.stderr)
+		scores.append(response)
+	return scores
+
+def method_6():
+	scores = []
+	score_names = ["STRENGTH", "INTELLIGENCE", "WISDOM", "DEXTERITY", "CONSTITUTION", "CHARISMA"]
+	i = 0
+	while i < 6:
+		response = int(input("What was determined for {}?\n".format(score_names[i])))
+		if response > 0:
+			scores.append(response)
+			i = i + 1
+		else:
+			print("Invalid score: {}, expected positive".format(response), file=sys.stderr)
+	return scores
+
+# General Characters
+def method_7():
 	scores = []
 	for _ in range(6):
 		roll1 = dice.d6()
@@ -402,7 +430,7 @@ def method_5():
 	return scores
 
 # Special NPCs with germane abilities as Method 1
-def method_6():
+def method_8():
 	scores = []
 	method1_scores = method_1()
 	abilities = get_germane()
@@ -423,7 +451,7 @@ def method_6():
 	return scores, method1_scores
 
 # Special NPCs with germane abilities as Method 2
-def method_7():
+def method_9():
 	scores = []
 	method2_scores = method_2()
 	abilities = get_germane()
@@ -444,7 +472,7 @@ def method_7():
 	return scores, method2_scores
 
 # Special NPCs with germane abilities as Method 3
-def method_8():
+def method_10():
 	scores = []
 	abilities = get_germane()
 	for i in range(1, 7):
@@ -464,7 +492,7 @@ def method_8():
 	return scores
 
 # Special NPCs with germane abilities as Method 4
-def method_9():
+def method_11():
 	score_sets = method_4()
 	abilities = get_germane()
 	for i in range(1, 7):
@@ -479,7 +507,7 @@ def method_9():
 	return score_sets
 
 # Special NPCs not determined as Player Characters
-def method_10():
+def method_12():
 	scores = []
 	abilities = get_germane()
 	for i in range(1, 7):
@@ -558,7 +586,7 @@ def generate_scores():
 	match method:
 		case 1:
 			print("Arrange these as the player desires:")
-			scores_rolled = method_2()
+			scores_rolled = method_1()
 			scores_rolled, scores = select_score(scores_rolled, scores, "STRENGTH")
 			scores_rolled, scores = select_score(scores_rolled, scores, "INTELLIGENCE")
 			scores_rolled, scores = select_score(scores_rolled, scores, "WISDOM")
@@ -623,9 +651,20 @@ def generate_scores():
 				else:
 					print("Invalid selection, 1-12 expected", file=sys.stderr)
 		case 5:
-			scores = method_5()
+			scores_rolled = method_5()
+			print("Arrange these as desired:")
+			scores_rolled, scores = select_score(scores_rolled, scores, "STRENGTH")
+			scores_rolled, scores = select_score(scores_rolled, scores, "INTELLIGENCE")
+			scores_rolled, scores = select_score(scores_rolled, scores, "WISDOM")
+			scores_rolled, scores = select_score(scores_rolled, scores, "DEXTERITY")
+			scores_rolled, scores = select_score(scores_rolled, scores, "CONSTITUTION")
+			scores.append(scores_rolled[0])
 		case 6:
-			raw_scores, method1_scores = method_6()
+			scores = method_6()
+		case 7:
+			scores = method_7()
+		case 8:
+			raw_scores, method1_scores = method_8()
 			if raw_scores[0]:
 				print("STRENGTH: {}".format(raw_scores[0]))
 			if raw_scores[1]:
@@ -641,8 +680,8 @@ def generate_scores():
 			if method1_scores:
 				print("Arrange these as desired:")
 			scores = arrange_scores(raw_scores, method1_scores)
-		case 7:
-			raw_scores, method2_scores = method_7()
+		case 9:
+			raw_scores, method2_scores = method_9()
 			if raw_scores[0]:
 				print("STRENGTH: {}".format(raw_scores[0]))
 			if raw_scores[1]:
@@ -658,10 +697,10 @@ def generate_scores():
 			if method2_scores:
 				print("Arrange these as desired:")
 			scores = arrange_scores(raw_scores, method2_scores)
-		case 8:
-			scores = method_8()
-		case 9:
-			score_sets = method_9()
+		case 10:
+			scores = method_10()
+		case 11:
+			score_sets = method_11()
 			print("Select the most desirable single set of scores:")
 			print("## | STRENGTH | INTELLIGENCE | WISDOM | DEXTERITY | CONSTITUTION | CHARISMA")
 			for i in range(1, len(score_sets) + 1):
@@ -706,13 +745,25 @@ def generate_scores():
 					break
 				else:
 					print("Invalid selection, 1-12 expected", file=sys.stderr)
-		case 10:
-			scores = method_10()
+		case 12:
+			scores = method_12()
+		# Same as for PCs, but duplicated to simplify checking for if player character
+		case 13:
+			scores_rolled = method_5()
+			print("Arrange these as desired:")
+			scores_rolled, scores = select_score(scores_rolled, scores, "STRENGTH")
+			scores_rolled, scores = select_score(scores_rolled, scores, "INTELLIGENCE")
+			scores_rolled, scores = select_score(scores_rolled, scores, "WISDOM")
+			scores_rolled, scores = select_score(scores_rolled, scores, "DEXTERITY")
+			scores_rolled, scores = select_score(scores_rolled, scores, "CONSTITUTION")
+			scores.append(scores_rolled[0])
+		case 14:
+			scores = method_6()
 
 	print("\nInitial scores:")
 	ui.print_scores(scores)
 
-	return scores, method < 5
+	return scores, method < 7
 
 def mod_avg_height(height):
 	avg_height_mod = dice.d100()
