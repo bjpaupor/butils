@@ -3,25 +3,72 @@ import sys
 import dice
 import ui
 
-def dwarven_qualified(scores, is_pc):
+def dwarven_qualified(scores, is_pc, should_log=True):
 	result = True
 	if scores[0] < 8 and is_pc:
-		print("STRENGTH: {} is too low for a dwarf, a minimum of 8 is required".format(scores[0]),
-		      file=sys.stderr)
+		if should_log:
+			print("STRENGTH: {} is too low for a dwarf, a minimum of 8 is required".format(scores[0]),
+			      file=sys.stderr)
 		result = False
 	elif scores[0] < 7 and not is_pc:
-		print("STRENGTH: {} is too low for a dwarf, a minimum of 8 (adjusted) is required".format(scores[0]),
-		      file=sys.stderr)
+		if should_log:
+			print("STRENGTH: {} is too low for a dwarf, a minimum of 8 (adjusted) is required".format(scores[0]),
+			      file=sys.stderr)
 		result = False
 	elif scores[4] < 11 and is_pc:
-		print("CONSTITUTION: {} is too low for a dwarf, a minimum of 12 (adjusted) is required".format(scores[4]),
-		      file=sys.stderr)
+		if should_log:
+			print("CONSTITUTION: {} is too low for a dwarf, a minimum of 12 (adjusted) is required".format(scores[4]),
+			      file=sys.stderr)
 		result = False
 	elif scores[4] < 10 and not is_pc:
-		print("CONSTITUTION: {} is too low for a dwarf, a minimum of 12 (adjusted) is required".format(scores[4]),
-		      file=sys.stderr)
+		if should_log:
+			print("CONSTITUTION: {} is too low for a dwarf, a minimum of 12 (adjusted) is required".format(scores[4]),
+			      file=sys.stderr)
 		result = False
 	return result
+
+def display_dwarven_arrangement_options(scores_rolled, is_pc):
+	scores_sorted = scores_rolled.copy()
+	scores_sorted.sort()
+	scores_dupe = scores_rolled.copy()
+
+	scores_dupe[4] = scores_sorted[5]
+	scores_dupe[0] = scores_sorted[4]
+	if not dwarven_qualified(scores_dupe, is_pc):
+		return
+
+	# No classes valid with two ability scores at 5 or lower
+	if scores_sorted[1] < 6:
+		return
+
+	if not is_pc:
+		print("\nDwarven options: minimum 7+1 strength, 10+2 constitution")
+		print("- cleric: minimum 6 all scores but dexterity")
+		print("- fighter: minimum 6 all scores but intelligence")
+		print("- thief: minimum 6 all scores but wisdom")
+		print("- assassin: minimum 6 all scores but charisma")
+		if scores_sorted[0] > 5:
+			print("- fighter/thief: minimum 6 all scores")
+			print("- laborer: minimum 6 all scores")
+			print("- mercenary: minimum 6 all scores")
+		if scores_sorted[5] > 11 and scores_sorted[4] > 11 and scores_sorted[3] > 9 \
+					 and scores_sorted[2] > 6 and scores_sorted[0] > 5:
+			print("- merchant/trader: minimum 6 all scores, 12 intelligence, 12 charisma")
+	else:
+		# in the unlikely event they don't qualify as any PC class
+		if scores_sorted[4] < 9:
+			return
+		print("\nDwarven options: minimum 8 strength, 11+1 constitution")
+		if scores_sorted[5] > 10 and scores_sorted[4] > 8:
+			print("- fighter: minimum 6 all scores but intelligence, 9 strength")
+		if scores_sorted[5] > 10 and scores_sorted[4] > 8 and scores_sorted[3] > 7:
+			print("- thief: minimum 6 all scores but wisdom, 9 dexterity")
+		if scores_sorted[5] > 11 and scores_sorted[4] > 11 and scores_sorted[3] > 10 \
+					 and scores_sorted[2] > 10:
+			print("- assassin: minimum 6 all scores but charisma, 12 strength, 11 intelligence, 12 dexterity")
+		if scores_sorted[5] > 10 and scores_sorted[4] > 8 and scores_sorted[3] > 8 \
+					 and scores_sorted[0] > 5:
+			print("- fighter/thief: minimum 6 all scores, 9 strength, 9 dexterity")
 
 def elven_qualified(ancestry, scores, is_pc):
 	result = True
@@ -49,11 +96,72 @@ def elven_qualified(ancestry, scores, is_pc):
 		print("CONSTITUTION: {} is too low for an elf, a minimum of 6 (adjusted) is required".format(scores[4]),
 		      file=sys.stderr)
 		result = False
-	elif scores[4] < 8:
-		print("CONSTITUTION: {} is too low for an elf, a minimum of 8 is required".format(scores[4]),
+	elif scores[5] < 8:
+		print("CHARISMA: {} is too low for an elf, a minimum of 8 is required".format(scores[5]),
 		      file=sys.stderr)
 		result = False
 	return result
+
+def display_elven_arrangement_options(scores_rolled, is_pc):
+	scores_sorted = scores_rolled.copy()
+	scores_sorted.sort()
+	scores_dupe = scores_rolled.copy()
+
+	scores_dupe[5] = scores_sorted[5]
+	scores_dupe[1] = scores_sorted[4]
+	scores_dupe[4] = scores_sorted[3]
+	scores_dupe[3] = scores_sorted[2]
+	if not elven_qualified("High", scores_dupe, is_pc):
+		return
+
+	# No classes valid with two ability scores at 5 or lower
+	if scores_sorted[1] < 6:
+		return
+
+	if not is_pc:
+		print("\nElven options: minimum 7+1 intelligence, 5+2 dexterity, 7-1 constitution, 8 charisma")
+		if scores_sorted[0] > 5:
+			print("- cleric: minimum 6 all scores")
+			print("- fighter: minimum 6 all scores")
+		print("- magic-user: minimum 6 wisdom")
+		print("- thief: minimum 6 strength")
+		if scores_sorted[0] > 5:
+			print("- assassin: minimum 6 all scores")
+			print("- fighter/magic-user: minimum 6 all scores")
+			print("- fighter/thief: minimum 6 all scores")
+			print("- magic-user/thief: minimum 6 all scores")
+			print("- fighter/magic-user/thief: minimum 6 all scores")
+			print("- laborer: minimum 6 all scores")
+			print("- mercenary: minimum 6 all scores")
+		if scores_sorted[5] > 11 and scores_sorted[4] > 10 and scores_sorted[0] > 5:
+			print("- merchant/trader: minimum 11+1 intelligence, 12 charisma")
+	else:
+		# in the unlikely event they don't qualify as any PC class
+		if scores_sorted[5] < 9:
+			return
+		print("\nElven options: minimum 8 intelligence, 6+1 dexterity, 7-1 constitution, 8 charisma")
+		if scores_sorted[5] > 8 and scores_sorted[4] > 7 and scores_sorted[2] > 6 \
+					and scores_sorted[0] > 5:
+			print("- fighter: minimum 9 strength, 6 wisdom")
+		if scores_sorted[5] > 8:
+			print("- magic-user: minimum 9 intelligence")
+		if scores_sorted[3] > 7 and scores_sorted[2] > 6:
+			print("- thief: minimum 6 strength, 8+1 dexterity")
+		if scores_sorted[5] > 11 and scores_sorted[3] > 10 and scores_sorted[2] > 7 \
+					 and scores_sorted[1] > 6 and scores_sorted[0] > 5:
+			print("- assassin: minimum 12 strength, 11 intelligence, 6 wisdom, 11+1 dexterity")
+		if scores_sorted[4] > 8 and scores_sorted[3] > 7 and scores_sorted[2] > 6 \
+					and scores_sorted[0] > 5:
+			print("- fighter/magic-user: minimum 9 strength, 9 intelligence, 6 wisdom")
+		if scores_sorted[5] > 8 and scores_sorted[2] > 7 and scores_sorted[1] > 6 \
+					and scores_sorted[0] > 5:
+			print("- fighter/thief: minimum 9 strength, 6 wisdom, 8+1 dexterity")
+		if scores_sorted[5] > 8 and scores_sorted[3] > 7 and scores_sorted[2] > 6 \
+					and scores_sorted[0] > 5:
+			print("- magic-user/thief: minimum 6 all scores, 9 intelligence, 8+1 dexterity")
+		if scores_sorted[4] > 8 and scores_sorted[2] > 7 and scores_sorted[1] > 6 \
+					and scores_sorted[0] > 5:
+			print("- fighter/magic-user/thief: minimum 9 strength, 9 intelligence, 6 wisdom, 8+1 dexterity")
 
 def gnome_qualified(scores, is_pc):
 	result = True
@@ -580,13 +688,18 @@ def arrange_scores(raw_scores, method_scores):
 		scores.append(raw_scores[5])
 	return scores
 
+def display_arrangement_options(scores_rolled, is_pc):
+	display_dwarven_arrangement_options(scores_rolled, is_pc)
+	display_elven_arrangement_options(scores_rolled, is_pc)
+
 def generate_scores():
 	method = get_method()
 	scores = []
 	match method:
 		case 1:
-			print("Arrange these as the player desires:")
 			scores_rolled = method_1()
+			display_arrangement_options(scores_rolled, True)
+			print("Arrange these as desired:")
 			scores_rolled, scores = select_score(scores_rolled, scores, "STRENGTH")
 			scores_rolled, scores = select_score(scores_rolled, scores, "INTELLIGENCE")
 			scores_rolled, scores = select_score(scores_rolled, scores, "WISDOM")
@@ -594,7 +707,7 @@ def generate_scores():
 			scores_rolled, scores = select_score(scores_rolled, scores, "CONSTITUTION")
 			scores.append(scores_rolled[0])
 		case 2:
-			print("Arrange these as the player desires:")
+			print("Arrange these as desired:")
 			scores_rolled = method_2()
 			scores_rolled, scores = select_score(scores_rolled, scores, "STRENGTH")
 			scores_rolled, scores = select_score(scores_rolled, scores, "INTELLIGENCE")
@@ -1053,6 +1166,11 @@ def get_charisma(scores):
 		return int(re.search(r'\d+', scores[5]).group())
 	return int(scores[5])
 
+def get_charisma_actual(scores):
+	if isinstance(scores[5], str):
+		return int(re.search(r'(\d+).*?(\d+)', scores[5]).group(2))
+	return int(scores[5])
+
 def get_possible_classes(ancestry, is_pc, scores):
 	possible_classes = []
 	if ui.is_dwarven(ancestry):
@@ -1097,12 +1215,13 @@ def get_possible_classes(ancestry, is_pc, scores):
 		print("Invalid ancestry: {}\n".format(ancestry), file=sys.stderr)
 
 	if not is_pc:
-		possible_classes.extend(["laborer", "mercenary", "merchant", "trader"])
+		possible_classes.extend(["laborer", "mercenary", "merchant/trader"])
 
 	possible_classes_dupe = possible_classes.copy()
 
+	# TODO: Account for minimum 5 scores
 	if (scores[0] < 15 or scores[1] < 12 or scores[2] < 15 or \
-	    scores[3] < 15 or scores[4] < 10 or scores[5] < 15) and \
+	    scores[3] < 15 or scores[4] < 10 or get_charisma_actual(scores) < 15) and \
 	    "bard" in possible_classes:
 		possible_classes_dupe.remove("bard")
 	if is_pc and scores[2] < 9 and "cleric" in possible_classes:
@@ -1116,8 +1235,8 @@ def get_possible_classes(ancestry, is_pc, scores):
 		possible_classes_dupe.remove("cleric/fighter")
 		possible_classes_dupe.remove("cleric/thief")
 		possible_classes_dupe.remove("cleric/assassin")
-	if ((is_pc and (scores[2] < 12 or get_charisma(scores) < 15)) or \
-		   (not is_pc and (scores[2] < 12 or get_charisma(scores) < 14))) and \
+	if ((is_pc and (scores[2] < 12 or get_charisma_actual(scores) < 15)) or \
+		   (not is_pc and (scores[2] < 12 or get_charisma_actual(scores) < 14))) and \
 		   "druid" in possible_classes:
 		possible_classes_dupe.remove("druid")
 	if is_pc and (scores[0] < 9 or scores[4] < 7) and "fighter" in possible_classes:
@@ -1132,8 +1251,8 @@ def get_possible_classes(ancestry, is_pc, scores):
 				if not is_pc and scores[2] >= 10 and "cleric" in class_option:
 					continue
 				possible_classes_dupe.remove(class_option)
-	if ((is_pc and (scores[0] < 12 or scores[1] < 9 or scores[2] < 13 or scores[4] < 9 or get_charisma(scores) < 17)) or \
-		   (not is_pc and get_charisma(scores) < 17)) and "paladin" in possible_classes:
+	if ((is_pc and (scores[0] < 12 or scores[1] < 9 or scores[2] < 13 or scores[4] < 9 or get_charisma_actual(scores) < 17)) or \
+		   (not is_pc and get_charisma_actual(scores) < 17)) and "paladin" in possible_classes:
 		possible_classes_dupe.remove("paladin")
 	if is_pc and (scores[1] < 9 or scores[3] < 6) and "magic-user" in possible_classes:
 		for class_option in possible_classes:
@@ -1162,9 +1281,8 @@ def get_possible_classes(ancestry, is_pc, scores):
 		   (not is_pc and (scores[0] < 12 or scores[2] < 15 or scores[3] < 15))) and \
 		   "monk" in possible_classes:
 		possible_classes_dupe.remove("monk")
-	if not is_pc and (scores[1] < 12 or get_charisma(scores) < 12):
-		possible_classes_dupe.remove("merchant")
-		possible_classes_dupe.remove("trader")
+	if not is_pc and (scores[1] < 12 or get_charisma_actual(scores) < 12):
+		possible_classes_dupe.remove("merchant/trader")
 
 	return possible_classes_dupe
 
@@ -1529,8 +1647,8 @@ def apply_human_age(ancestry, age, char_class, is_masc, scores):
 
 def generate_age(ancestry, is_pc, char_class, is_masc, scores):
 	age = 0
-	if not is_pc and (char_class == "laborer" or char_class == "mercenary" or char_class == "merchant" \
-	   or char_class == "trader" or ui.is_negative(input("Is this NPC a henchman or otherwise using a rolled age?\n"))):
+	if not is_pc and (char_class == "laborer" or char_class == "mercenary" or char_class == "merchant/trader" \
+	   or ui.is_negative(input("Is this NPC a henchman or otherwise using a rolled age?\n"))):
 		age = int(input("How many years old is this character?\n"))
 	else:
 		if ui.is_dwarven(ancestry):
